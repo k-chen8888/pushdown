@@ -35,14 +35,18 @@ class PDA
 		toStringF tstr;
 		destructorF destr;
 		
-		// Error checking; < 0 means error, do not continue
+		// Error checking
+		// < 0 means error, do not continue
 		int err;
+		
+		// Index of last opening delimiter to be popped
+		unsigned int idelim;
 		
 		// Private default constructor
 		PDA() { }
 		
 	public:
-		// Constructor
+		/* Constructor */
 		PDA(std::vector<T> src, std::vector<T> p, comparatorF co, copyF cp, toStringF ts, destructorF de);
 		
 		/*******************************************
@@ -58,6 +62,7 @@ class PDA
 		void push(int index);
 		
 		// Remove index of a delimiter from the stack when its complement is found
+		// Records what was popped
 		void pop();
 		
 		/* Reporting */
@@ -67,6 +72,9 @@ class PDA
 		
 		// Get error code
 		int getErr();
+		
+		// Get the index of the last delimiter to be popped off of the stack
+		unsigned int lastDelim();
 		
 		// Get a portion of source from this->start to this->pos as a vector (non-empty if this->start > this->pos)
 		// Update start if update == true
@@ -101,14 +109,18 @@ class PDA<std::string>
 		unsigned int pos;                 // Current read position of PDA
 		bool esc;                         // True if an escape character was found
 		
-		// Error checking; < 0 means error, do not continue
+		// Error checking
+		// < 0 means error, do not continue
 		int err;
+		
+		// Index of last opening delimiter to be popped
+		unsigned int idelim;
 		
 		// Private default constructor
 		PDA() { }
 		
 	public:
-		// Constructor
+		/* Constructor */
 		PDA(std::string, std::vector<char> p);
 		
 		/*******************************************
@@ -124,6 +136,7 @@ class PDA<std::string>
 		void push(int index);
 		
 		// Remove index of a delimiter from the stack when its complement is found
+		// Records what was popped
 		void pop();
 		
 		/* Reporting */
@@ -133,6 +146,9 @@ class PDA<std::string>
 		
 		// Get error code
 		int getErr();
+		
+		// Get the index of the last delimiter to be popped off of the stack
+		unsigned int lastDelim();
 		
 		// Get a portion of source from this->start to this->pos as a vector (non-empty if this->start > this->pos)
 		// Update start if update == true

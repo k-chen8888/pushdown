@@ -39,6 +39,9 @@ PDA<T>::PDA(vector<T> src, vector<T> p, comparatorF co, copyF cp, toStringF ts, 
 	
 	// Error codes
 	this->err = 0;
+	
+	// Delimiter index
+	this->idelim = 0;
 };
 
 /*******************************************
@@ -178,6 +181,7 @@ void PDA<T>::push(int index)
 template <typename T>
 void PDA<T>::pop()
 {
+	this->idelim = this->stack.back();
 	this->stack.pop_back();
 };
 
@@ -195,6 +199,13 @@ template <typename T>
 int PDA<T>::getErr()
 {
 	return this->err;
+};
+
+// Get the index of the last delimiter to be popped off of the stack
+template <typename T>
+unsigned int PDA<T>::lastDelim()
+{
+	return this->idelim;
 };
 
 // Get a portion of source from this->start to this->pos as a vector (non-empty if this->start > this->pos)
@@ -425,6 +436,7 @@ void PDA<string>::push(int index)
 inline
 void PDA<string>::pop()
 {
+	this->idelim = this->stack.back();
 	this->stack.pop_back();
 };
 
@@ -442,6 +454,13 @@ inline
 int PDA<string>::getErr()
 {
 	return this->err;
+};
+
+// Get the index of the last delimiter to be popped off of the stack
+inline
+unsigned int PDA<string>::lastDelim()
+{
+	return this->idelim;
 };
 
 // Get a portion of source from this->start to this->pos as a vector (non-empty if this->start > this->pos)
