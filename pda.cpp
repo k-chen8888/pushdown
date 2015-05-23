@@ -171,18 +171,21 @@ vector<T> PDA<T>::readNext()
 };
 
 // Add index of a delimiter to the stack
+// Records what was pushed
 template <typename T>
 void PDA<T>::push(int index)
 {
 	this->stack.push_back(index);
+	this->idelim = index;
 };
 
 // Remove index of a delimiter from the stack when its complement is found
+// Resets the saved delimiter index to 0
 template <typename T>
 void PDA<T>::pop()
 {
-	this->idelim = this->stack.back();
 	this->stack.pop_back();
+	this->idelim = 0;
 };
 
 /* Reporting */
@@ -426,18 +429,21 @@ string PDA<string>::readNext()
 };
 
 // Add index of a delimiter to the stack
+// Records what was pushed
 inline
 void PDA<string>::push(int index)
 {
 	this->stack.push_back(index);
+	this->idelim = index;
 };
 
 // Remove index of a delimiter from the stack when its complement is found
+// Resets the saved delimiter index to 0
 inline
 void PDA<string>::pop()
 {
-	this->idelim = this->stack.back();
 	this->stack.pop_back();
+	this->idelim = 0;
 };
 
 /* Reporting */

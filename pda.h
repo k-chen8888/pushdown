@@ -59,10 +59,11 @@ class PDA
 		std::vector<T> readNext();
 		
 		// Add index of a delimiter to the stack
+		// Records what was pushed
 		void push(int index);
 		
 		// Remove index of a delimiter from the stack when its complement is found
-		// Records what was popped
+		// Resets the saved delimiter index to 0
 		void pop();
 		
 		/* Reporting */
@@ -133,10 +134,11 @@ class PDA<std::string>
 		std::string readNext();
 		
 		// Add index of a delimiter to the stack
+		// Records what was pushed
 		void push(int index);
 		
 		// Remove index of a delimiter from the stack when its complement is found
-		// Records what was popped
+		// Resets the saved delimiter index to 0
 		void pop();
 		
 		/* Reporting */
