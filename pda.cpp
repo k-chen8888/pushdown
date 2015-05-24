@@ -180,12 +180,16 @@ void PDA<T>::push(int index)
 };
 
 // Remove index of a delimiter from the stack when its complement is found
-// Resets the saved delimiter index to 0
+// Resets the saved delimiter index to the last element of the stack
 template <typename T>
 void PDA<T>::pop()
 {
 	this->stack.pop_back();
-	this->idelim = 0;
+	
+	if(this->stack.size() > 0)
+		this->idelim = this->stack.back();
+	else
+		this->idelim = 0;
 };
 
 /* Reporting */
@@ -204,11 +208,18 @@ int PDA<T>::getErr()
 	return this->err;
 };
 
-// Get the index of the last delimiter to be popped off of the stack
+// Get the index of the last delimiter to be pushed onto the stack
 template <typename T>
 unsigned int PDA<T>::lastDelim()
 {
 	return this->idelim;
+};
+
+// Get the depth of the stack
+template <typename T>
+unsigned int PDA<T>::stackDepth()
+{
+	return this->stack.size();
 };
 
 // Get a portion of source from this->start to this->pos as a vector (non-empty if this->start > this->pos)
@@ -438,12 +449,16 @@ void PDA<string>::push(int index)
 };
 
 // Remove index of a delimiter from the stack when its complement is found
-// Resets the saved delimiter index to 0
+// Resets the saved delimiter index to the last element of the stack
 inline
 void PDA<string>::pop()
 {
 	this->stack.pop_back();
-	this->idelim = 0;
+	
+	if(this->stack.size() > 0)
+		this->idelim = this->stack.back();
+	else
+		this->idelim = 0;
 };
 
 /* Reporting */
@@ -462,11 +477,18 @@ int PDA<string>::getErr()
 	return this->err;
 };
 
-// Get the index of the last delimiter to be popped off of the stack
+// Get the index of the last delimiter to be pushed onto the stack
 inline
 unsigned int PDA<string>::lastDelim()
 {
 	return this->idelim;
+};
+
+// Get the depth of the stack
+inline
+unsigned int PDA<string>::stackDepth()
+{
+	return this->stack.size();
 };
 
 // Get a portion of source from this->start to this->pos as a vector (non-empty if this->start > this->pos)

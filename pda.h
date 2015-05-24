@@ -63,7 +63,7 @@ class PDA
 		void push(int index);
 		
 		// Remove index of a delimiter from the stack when its complement is found
-		// Resets the saved delimiter index to 0
+		// Resets the saved delimiter index to the last element of the stack
 		void pop();
 		
 		/* Reporting */
@@ -74,8 +74,11 @@ class PDA
 		// Get error code
 		int getErr();
 		
-		// Get the index of the last delimiter to be popped off of the stack
+		// Get the index of the last delimiter to be pushed onto the stack
 		unsigned int lastDelim();
+		
+		// Get the depth of the stack
+		unsigned int stackDepth();
 		
 		// Get a portion of source from this->start to this->pos as a vector (non-empty if this->start > this->pos)
 		// Update start if update == true
@@ -103,18 +106,18 @@ template <>
 class PDA<std::string>
 {
 	private:
-		std::string source;               // Source to read from (generally some kind of list or string)
-		std::vector<unsigned int> stack;  // Stack used to keep track of delimiter pairs, array of indices from delimiter pairs vector
-		std::vector<char> pairs;          // Token pairs, store the escape delimiter in index 0
-		int start;                        // Starting position of valid token
-		unsigned int pos;                 // Current read position of PDA
-		bool esc;                         // True if an escape character was found
+		std::string source;              // Source to read from (generally some kind of list or string)
+		std::vector<unsigned int> stack; // Stack used to keep track of delimiter pairs, array of indices from delimiter pairs vector
+		std::vector<char> pairs;         // Token pairs, store the escape delimiter in index 0
+		int start;                       // Starting position of valid token
+		unsigned int pos;                // Current read position of PDA
+		bool esc;                        // True if an escape character was found
 		
 		// Error checking
 		// < 0 means error, do not continue
 		int err;
 		
-		// Index of last opening delimiter to be popped
+		// Index of last opening delimiter pushed
 		unsigned int idelim;
 		
 		// Private default constructor
@@ -138,7 +141,7 @@ class PDA<std::string>
 		void push(int index);
 		
 		// Remove index of a delimiter from the stack when its complement is found
-		// Resets the saved delimiter index to 0
+		// Resets the saved delimiter index to the last element of the stack
 		void pop();
 		
 		/* Reporting */
@@ -149,8 +152,11 @@ class PDA<std::string>
 		// Get error code
 		int getErr();
 		
-		// Get the index of the last delimiter to be popped off of the stack
+		// Get the index of the last delimiter to be pushed onto the stack
 		unsigned int lastDelim();
+		
+		// Get the depth of the stack
+		unsigned int stackDepth();
 		
 		// Get a portion of source from this->start to this->pos as a vector (non-empty if this->start > this->pos)
 		// Update start if update == true
