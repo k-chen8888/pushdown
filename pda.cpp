@@ -222,6 +222,13 @@ unsigned int PDA<T>::stackDepth()
 	return this->stack.size();
 };
 
+// Check if escape character flag is set
+template <typename T>
+bool PDA<T>::isEsc()
+{
+	return this->esc;
+};
+
 // Get a portion of source from this->start to this->pos as a vector (non-empty if this->start > this->pos)
 // Update start if update == true
 template <typename T>
@@ -489,6 +496,13 @@ inline
 unsigned int PDA<string>::stackDepth()
 {
 	return this->stack.size();
+};
+
+// Check if escape character flag is set
+inline
+bool PDA<string>::isEsc()
+{
+	return this->esc;
 };
 
 // Get a portion of source from this->start to this->pos as a vector (non-empty if this->start > this->pos)

@@ -10,7 +10,7 @@ Any type:
   - Pairs are delimiters such that one of them "opens" a block and another "closes" a block
     - Examples: { }, ' ',
   - The first element of the vector is the delimiter character
-- Constructor function
+- Comparator function
 - Copy function
 - toString function
 - Destructor function

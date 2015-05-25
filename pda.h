@@ -80,6 +80,9 @@ class PDA
 		// Get the depth of the stack
 		unsigned int stackDepth();
 		
+		// Check if escape character flag is set
+		bool isEsc();
+		
 		// Get a portion of source from this->start to this->pos as a vector (non-empty if this->start > this->pos)
 		// Update start if update == true
 		std::vector<T> getPortion(bool update);
@@ -157,6 +160,9 @@ class PDA<std::string>
 		
 		// Get the depth of the stack
 		unsigned int stackDepth();
+		
+		// Check if escape character flag is set
+		bool isEsc();
 		
 		// Get a portion of source from this->start to this->pos as a vector (non-empty if this->start > this->pos)
 		// Update start if update == true
