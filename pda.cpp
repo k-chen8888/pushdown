@@ -41,7 +41,7 @@ PDA<T>::PDA(vector<T> src, vector<T> p, comparatorF co, copyF cp, toStringF ts, 
 	this->err = 0;
 	
 	// Delimiter index
-	this->idelim = 0;
+	this->cdelim = 0;
 };
 
 /*******************************************
@@ -176,7 +176,6 @@ template <typename T>
 void PDA<T>::push(int index)
 {
 	this->stack.push_back(index);
-	this->idelim = index;
 };
 
 // Remove index of a delimiter from the stack when its complement is found
@@ -184,12 +183,8 @@ void PDA<T>::push(int index)
 template <typename T>
 void PDA<T>::pop()
 {
+	this->cdelim = this->stack.back();
 	this->stack.pop_back();
-	
-	if(this->stack.size() > 0)
-		this->idelim = this->stack.back();
-	else
-		this->idelim = 0;
 };
 
 /* Reporting */
@@ -212,7 +207,14 @@ int PDA<T>::getErr()
 template <typename T>
 unsigned int PDA<T>::lastDelim()
 {
-	return this->idelim;
+	return this->stack.back();
+};
+
+// Get the index of the last delimiter to be removed from the stack
+template <typename T>
+unsigned int PDA<T>::lastRemoved()
+{
+	return this->cdelim;
 };
 
 // Get the depth of the stack
@@ -318,6 +320,9 @@ PDA<string>::PDA(string src, vector<char> p)
 	
 	// Error codes
 	this->err = 0;
+	
+	// Delimiter index
+	this->cdelim = 0;
 };
 
 /*******************************************
@@ -452,7 +457,6 @@ inline
 void PDA<string>::push(int index)
 {
 	this->stack.push_back(index);
-	this->idelim = index;
 };
 
 // Remove index of a delimiter from the stack when its complement is found
@@ -460,12 +464,8 @@ void PDA<string>::push(int index)
 inline
 void PDA<string>::pop()
 {
+	this->cdelim = this->stack.back();
 	this->stack.pop_back();
-	
-	if(this->stack.size() > 0)
-		this->idelim = this->stack.back();
-	else
-		this->idelim = 0;
 };
 
 /* Reporting */
@@ -488,7 +488,14 @@ int PDA<string>::getErr()
 inline
 unsigned int PDA<string>::lastDelim()
 {
-	return this->idelim;
+	return this->stack.back();
+};
+
+// Get the index of the last delimiter to be removed from the stack
+inline
+unsigned int PDA<string>::lastRemoved()
+{
+	return this->cdelim;
 };
 
 // Get the depth of the stack

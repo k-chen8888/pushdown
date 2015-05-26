@@ -39,8 +39,8 @@ class PDA
 		// < 0 means error, do not continue
 		int err;
 		
-		// Index of last opening delimiter to be popped
-		unsigned int idelim;
+		// Index of last opening delimiter popped
+		unsigned int cdelim;
 		
 		// Private default constructor
 		PDA() { }
@@ -76,6 +76,9 @@ class PDA
 		
 		// Get the index of the last delimiter to be pushed onto the stack
 		unsigned int lastDelim();
+		
+		// Get the index of the last delimiter to be removed from the stack
+		unsigned int lastRemoved();
 		
 		// Get the depth of the stack
 		unsigned int stackDepth();
@@ -120,8 +123,8 @@ class PDA<std::string>
 		// < 0 means error, do not continue
 		int err;
 		
-		// Index of last opening delimiter pushed
-		unsigned int idelim;
+		// Index of last opening delimiter popped
+		unsigned int cdelim;
 		
 		// Private default constructor
 		PDA() { }
@@ -157,6 +160,9 @@ class PDA<std::string>
 		
 		// Get the index of the last delimiter to be pushed onto the stack
 		unsigned int lastDelim();
+		
+		// Get the index of the last delimiter to be removed from the stack
+		unsigned int lastRemoved();
 		
 		// Get the depth of the stack
 		unsigned int stackDepth();
