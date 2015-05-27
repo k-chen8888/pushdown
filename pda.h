@@ -40,7 +40,7 @@ class PDA
 		int err;
 		
 		// Index of last opening delimiter popped
-		unsigned int cdelim;
+		unsigned int odelim;
 		
 		// Private default constructor
 		PDA() { }
@@ -60,7 +60,7 @@ class PDA
 		
 		// Add index of a delimiter to the stack
 		// Records what was pushed
-		void push(int index);
+		void push(unsigned int index);
 		
 		// Remove index of a delimiter from the stack when its complement is found
 		// Resets the saved delimiter index to the last element of the stack
@@ -124,7 +124,7 @@ class PDA<std::string>
 		int err;
 		
 		// Index of last opening delimiter popped
-		unsigned int cdelim;
+		unsigned int odelim;
 		
 		// Private default constructor
 		PDA() { }
@@ -144,7 +144,7 @@ class PDA<std::string>
 		
 		// Add index of a delimiter to the stack
 		// Records what was pushed
-		void push(int index);
+		void push(unsigned int index);
 		
 		// Remove index of a delimiter from the stack when its complement is found
 		// Resets the saved delimiter index to the last element of the stack
@@ -182,6 +182,90 @@ class PDA<std::string>
 		
 		// Report starting/closing delimiter pair mismatch
 		int mismatchErr(char start, char close);
+		
+		/* Destructor */
+		~PDA();
+};
+
+
+/************************************************
+ * Specialized type wstring (unicode)
+ * Source is a wstring, delimiters are characters
+ ************************************************/
+template <>
+class PDA<std::wstring>
+{
+	private:
+		std::wstring source;             // Source to read from (generally some kind of list or string)
+		std::vector<unsigned int> stack; // Stack used to keep track of delimiter pairs, array of indices from delimiter pairs vector
+		std::vector<wchar_t> pairs;      // Token pairs, store the escape delimiter in index 0
+		int start;                       // Starting position of valid token
+		unsigned int pos;                // Current read position of PDA
+		bool esc;                        // True if an escape character was found
+		
+		// Error checking
+		// < 0 means error, do not continue
+		int err;
+		
+		// Index of last opening delimiter popped
+		unsigned int odelim;
+		
+		// Private default constructor
+		PDA() { }
+		
+	public:
+		/* Constructor */
+		PDA(std::wstring, std::vector<wchar_t> p);
+		
+		/*******************************************
+		 * Functions
+		 *******************************************/
+		
+		/* Traverse automata */
+		
+		// Read next element from source
+		std::wstring readNext();
+		
+		// Add index of a delimiter to the stack
+		// Records what was pushed
+		void push(unsigned int index);
+		
+		// Remove index of a delimiter from the stack when its complement is found
+		// Resets the saved delimiter index to the last element of the stack
+		void pop();
+		
+		/* Reporting */
+		
+		// Get current position of automata
+		unsigned int getPos();
+		
+		// Get error code
+		int getErr();
+		
+		// Get the index of the last delimiter to be pushed onto the stack
+		unsigned int lastDelim();
+		
+		// Get the index of the last delimiter to be removed from the stack
+		unsigned int lastRemoved();
+		
+		// Get the depth of the stack
+		unsigned int stackDepth();
+		
+		// Check if escape character flag is set
+		bool isEsc();
+		
+		// Get a portion of source from this->start to this->pos as a vector (non-empty if this->start > this->pos)
+		// Update start if update == true
+		std::wstring getPortion(bool update);
+		
+		// Report starting delimiter missing
+		int noStartErr(wchar_t close);
+		
+		// Report closing delimiter missing
+		int noCloseErr();
+		
+		// Report starting/closing delimiter pair mismatch
+		int mismatchErr(wchar_t start, wchar_t close);
 		
 		/* Destructor */
 		~PDA();

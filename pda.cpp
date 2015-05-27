@@ -3,6 +3,12 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <locale.h>
+
+// Locale tools
+#include <locale>
+#include <stdio.h>
+#include <fcntl.h>
 
 // Class header
 #include "pda.h"
@@ -41,7 +47,7 @@ PDA<T>::PDA(vector<T> src, vector<T> p, comparatorF co, copyF cp, toStringF ts, 
 	this->err = 0;
 	
 	// Delimiter index
-	this->cdelim = 0;
+	this->odelim = 0;
 };
 
 /*******************************************
@@ -55,6 +61,10 @@ template <typename T>
 vector<T> PDA<T>::readNext()
 {
 	vector<T> out;
+	
+	// Reset the last opening delimiter popped, assuming that the user has already accessed it
+	if(this->odelim != 0)
+		this->odelim = 0;
 	
 	// Normal operation
 	if(this->esc) // Check for escaped character
@@ -173,7 +183,7 @@ vector<T> PDA<T>::readNext()
 // Add index of a delimiter to the stack
 // Records what was pushed
 template <typename T>
-void PDA<T>::push(int index)
+void PDA<T>::push(unsigned int index)
 {
 	this->stack.push_back(index);
 };
@@ -183,7 +193,7 @@ void PDA<T>::push(int index)
 template <typename T>
 void PDA<T>::pop()
 {
-	this->cdelim = this->stack.back();
+	this->odelim = this->stack.back();
 	this->stack.pop_back();
 };
 
@@ -214,7 +224,7 @@ unsigned int PDA<T>::lastDelim()
 template <typename T>
 unsigned int PDA<T>::lastRemoved()
 {
-	return this->cdelim;
+	return this->odelim;
 };
 
 // Get the depth of the stack
@@ -322,7 +332,7 @@ PDA<string>::PDA(string src, vector<char> p)
 	this->err = 0;
 	
 	// Delimiter index
-	this->cdelim = 0;
+	this->odelim = 0;
 };
 
 /*******************************************
@@ -336,6 +346,10 @@ inline
 string PDA<string>::readNext()
 {
 	string out;
+	
+	// Reset the last opening delimiter popped, assuming that the user has already accessed it
+	if(this->odelim != 0)
+		this->odelim = 0;
 	
 	// Normal operation
 	if(this->esc) // Check for escaped character
@@ -454,7 +468,7 @@ string PDA<string>::readNext()
 // Add index of a delimiter to the stack
 // Records what was pushed
 inline
-void PDA<string>::push(int index)
+void PDA<string>::push(unsigned int index)
 {
 	this->stack.push_back(index);
 };
@@ -464,7 +478,7 @@ void PDA<string>::push(int index)
 inline
 void PDA<string>::pop()
 {
-	this->cdelim = this->stack.back();
+	this->odelim = this->stack.back();
 	this->stack.pop_back();
 };
 
@@ -495,7 +509,7 @@ unsigned int PDA<string>::lastDelim()
 inline
 unsigned int PDA<string>::lastRemoved()
 {
-	return this->cdelim;
+	return this->odelim;
 };
 
 // Get the depth of the stack
@@ -564,6 +578,284 @@ int PDA<string>::mismatchErr(char start, char close)
 /* Destructor */
 inline
 PDA<string>::~PDA()
+{
+	// Nothing to do, really
+};
+
+
+/************************************************
+ * Specialized type wstring (unicode)
+ * Source is a wstring, delimiters are characters
+ ************************************************/
+
+// Constructor
+inline
+PDA<wstring>::PDA(wstring src, vector<wchar_t> p)
+{
+	// Load info
+	this->source = src;
+	this->pairs = p;
+	
+	// Stack... is already initialized to an empty vector
+	
+	// Tracking
+	this->start = 0;
+	this->pos = 0;
+	this->esc = false;
+	
+	// No user-inputted comparator, copy, toString, and destructor functions needed
+	
+	// Error codes
+	this->err = 0;
+	
+	// Delimiter index
+	this->odelim = 0;
+	
+	//Set unicode output
+	_setmode(_fileno(stdout), _O_U16TEXT);
+};
+
+/*******************************************
+ * Functions
+ *******************************************/
+
+/* Traverse automata */
+
+// Read next element from source
+inline
+wstring PDA<wstring>::readNext()
+{
+	wstring out;
+	
+	// Reset the last opening delimiter popped, assuming that the user has already accessed it
+	if(this->odelim != 0)
+		this->odelim = 0;
+	
+	// Normal operation
+	if(this->esc) // Check for escaped character
+	{
+		this->esc = false;
+		
+		// Nothing else to do
+		this->pos += 1;
+		return out;
+	}
+	else
+	{
+		// Check for escape character
+		if( this->source.at(this->pos) == this->pairs[0] )
+		{
+			this->esc = true;
+			
+			// Nothing else to do
+			this->pos += 1;
+			return out;
+		}
+		else
+		{
+			// Check for opening delimiter
+			for(unsigned int i = 1; i < this->pairs.size(); i += 2)
+			{
+				// Check for opening delimiters that pair with themselves
+				if( this->stack.size() > 0 )
+				{
+					if( this->source.at(this->pos) == this->pairs[i + 1] )
+					{
+						this->pop();
+						
+						// Build token
+						out = this->getPortion(true);
+						
+						// Clean up and return
+						this->pos += 1;
+						return out;
+					}
+				}
+				
+				// Normal opening delimiter
+				if( this->source.at(this->pos) == this->pairs[i] )
+				{
+					this->push(i);
+					
+					// Try to build a token
+					out = this->getPortion(true);
+					
+					// Clean up and return
+					this->pos += 1;
+					return out;
+				}
+			}
+			
+			// Check for closing delimiter
+			for(unsigned int i = 2; i < this->pairs.size(); i += 2)
+			{
+				if( this->source.at(this->pos) == this->pairs[i] )
+				{
+					if( this->stack.size() > 0 )
+					{
+						unsigned int op_index = this->stack.back();
+						if(op_index == i - 1) // Pop if correct delimiter pairing
+						{
+							this->pop();
+						}
+						else // Invalid closing delimiter
+						{
+							// Report error, stop traversal, and return
+							this->err = this->mismatchErr(this->pairs[op_index], this->pairs[i]);
+							return out;
+						}
+						
+						// Build token
+						out = this->getPortion(true);
+						
+						// Clean up and return
+						this->pos += 1;
+						return out;
+					}
+					else
+					{
+						// Report error, stop traversal, and return
+						this->err = this->noStartErr(this->pairs[i]);
+						return out;
+					}
+				}
+			}
+			
+			// Found nothing of the sort
+			this->pos += 1;
+		}
+	}
+		
+	// End of source?
+	if(this->pos >= this->source.size())
+	{
+		// Check for errors at the end of traversal
+		if(this->stack.size() > 0)
+		{
+			this->err = this->noCloseErr();
+			return out;
+		}
+		
+		// Try to output a token
+		out = this->getPortion(true);
+		return out;
+	}
+	
+	// Final return
+	return out;
+};
+
+// Add index of a delimiter to the stack
+// Records what was pushed
+inline
+void PDA<wstring>::push(unsigned int index)
+{
+	this->stack.push_back(index);
+};
+
+// Remove index of a delimiter from the stack when its complement is found
+// Resets the saved delimiter index to the last element of the stack
+inline
+void PDA<wstring>::pop()
+{
+	this->odelim = this->stack.back();
+	this->stack.pop_back();
+};
+
+/* Reporting */
+
+// Get current position of automata
+inline
+unsigned int PDA<wstring>::getPos()
+{
+	return this->pos;
+};
+
+// Get error code
+inline
+int PDA<wstring>::getErr()
+{
+	return this->err;
+};
+
+// Get the index of the last delimiter to be pushed onto the stack
+inline
+unsigned int PDA<wstring>::lastDelim()
+{
+	return this->stack.back();
+};
+
+// Get the index of the last delimiter to be removed from the stack
+inline
+unsigned int PDA<wstring>::lastRemoved()
+{
+	return this->odelim;
+};
+
+// Get the depth of the stack
+inline
+unsigned int PDA<wstring>::stackDepth()
+{
+	return this->stack.size();
+};
+
+// Check if escape character flag is set
+inline
+bool PDA<wstring>::isEsc()
+{
+	return this->esc;
+};
+
+// Get a portion of source from this->start to this->pos as a vector (non-empty if this->start > this->pos)
+// Update start if update == true
+inline
+wstring PDA<wstring>::getPortion(bool update)
+{
+	wstring out = this->source.substr(this->start, this->pos - this->start);
+	
+	// Update start if necessary
+	if(update)
+		this->start = this->pos + 1;
+	
+	return out;
+};
+
+// Report starting delimiter missing
+inline
+int PDA<wstring>::noStartErr(wchar_t close)
+{
+	wcout << "[Error] Non-escaped delimiter " << close << " has no starting complement\n";
+	
+	return -1;
+};
+
+// Report closing delimiter missing
+inline
+int PDA<wstring>::noCloseErr()
+{
+	wcout << "[Error] Non-escaped delimiter(s) [ ";
+	for(unsigned int i = 0; i < this->stack.size(); i++)
+	{
+		int j = this->stack[i];
+		wcout << this->pairs[j] << " ";
+	}
+	wcout << "] do(es) not have a closing complement\n";
+	
+	return -2;
+};
+
+// Report starting/closing delimiter pair mismatch
+inline
+int PDA<wstring>::mismatchErr(wchar_t start, wchar_t close)
+{
+	wcout << "[Error] Starting delimiter " << start << " does not pair with closing delimiter " << close << "\n";
+	
+	return -3;
+};
+
+/* Destructor */
+inline
+PDA<wstring>::~PDA()
 {
 	// Nothing to do, really
 };
