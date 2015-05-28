@@ -1,34 +1,21 @@
-#ifndef PDA_H
-#define PDA_H
-
-
-// Typedefs for comparator/destructor functions
-typedef int (*comparatorF)(void*, void*);
-typedef void* (*copyF)(void*);
-typedef std::string (*toStringF)(void*);
-typedef void (*destructorF)(void*);
+#ifndef PDA_STRING_H
+#define PDA_STRING_H
 
 
 /************************************************
- * Standard template T
- * General-purpose PDA
+ * Specialized type string
+ * Source is a string, delimiters are characters
  ************************************************/
-template <typename T>
-class PDA
+template <>
+class PDA<std::string>
 {
 	private:
-		std::vector<T> source;           // Source to read from (generally some kind of list or string)
+		std::string source;              // Source to read from (generally some kind of list or string)
 		std::vector<unsigned int> stack; // Stack used to keep track of delimiter pairs, array of indices from delimiter pairs vector
-		std::vector<T> pairs;            // Token pairs, store the escape delimiter in index 0
+		std::vector<char> pairs;         // Token pairs, store the escape delimiter in index 0
 		int start;                       // Starting position of valid token
 		unsigned int pos;                // Current read position of PDA
 		bool esc;                        // True if an escape character was found
-		
-		// Comparator, copy, toString, and destructor functions
-		comparatorF comp;                // "less than" returns < 0; "greater than" returns > 0; "equal to" returns 0
-		copyF cpy;
-		toStringF tstr;
-		destructorF destr;
 		
 		// Error checking
 		// < 0 means error, do not continue
@@ -42,7 +29,7 @@ class PDA
 		
 	public:
 		/* Constructor */
-		PDA(std::vector<T> src, std::vector<T> p, comparatorF co, copyF cp, toStringF ts, destructorF de)
+		PDA(std::string src, std::vector<char> p)
 		{
 			// Load info
 			this->source = src;
@@ -55,11 +42,7 @@ class PDA
 			this->pos = 0;
 			this->esc = false;
 			
-			// Comparator, copy, toString, and destructor functions
-			this->comp = co;
-			this->cpy = cp;
-			this->tstr = ts;
-			this->destr = de;
+			// No user-inputted comparator, copy, toString, and destructor functions needed
 			
 			// Error codes
 			this->err = 0;
@@ -75,9 +58,9 @@ class PDA
 		/* Traverse automata */
 		
 		// Read next element from source
-		std::vector<T> readNext()
+		std::string readNext()
 		{
-			std::vector<T> out;
+			std::string out;
 			
 			// Reset the last opening delimiter popped, assuming that the user has already accessed it
 			if(this->odelim != 0)
@@ -95,7 +78,7 @@ class PDA
 			else
 			{
 				// Check for escape character
-				if( this->comp( &(this->source[this->pos]), &(this->pairs[0]) ) == 0 )
+				if( this->source.at(this->pos) == this->pairs[0] )
 				{
 					this->esc = true;
 					
@@ -111,7 +94,7 @@ class PDA
 						// Check for opening delimiters that pair with themselves
 						if( this->stack.size() > 0 )
 						{
-							if( this->comp( &(this->source[this->pos]), &(this->pairs[i + 1]) ) == 0 )
+							if( this->source.at(this->pos) == this->pairs[i + 1] )
 							{
 								this->pop();
 								
@@ -125,7 +108,7 @@ class PDA
 						}
 						
 						// Normal opening delimiter
-						if( this->comp( &(this->source[this->pos]), &(this->pairs[i]) ) == 0 )
+						if( this->source.at(this->pos) == this->pairs[i] )
 						{
 							this->push(i);
 							
@@ -141,12 +124,12 @@ class PDA
 					// Check for closing delimiter
 					for(unsigned int i = 2; i < this->pairs.size(); i += 2)
 					{
-						if( this->comp( &(this->source[this->pos]), &(this->pairs[i]) ) == 0 )
+						if( this->source.at(this->pos) == this->pairs[i] )
 						{
 							if( this->stack.size() > 0 )
 							{
 								unsigned int op_index = this->stack.back();
-								if(op_index == i - 1)
+								if(op_index == i - 1) // Pop if correct delimiter pairing
 								{
 									this->pop();
 								}
@@ -177,7 +160,7 @@ class PDA
 					this->pos += 1;
 				}
 			}
-			
+				
 			// End of source?
 			if(this->pos >= this->source.size())
 			{
@@ -252,17 +235,9 @@ class PDA
 		
 		// Get a portion of source from this->start to this->pos as a vector (non-empty if this->start > this->pos)
 		// Update start if update == true
-		std::vector<T> getPortion(bool update)
+		std::string getPortion(bool update)
 		{
-			std::vector<T> out;
-			
-			for(unsigned int i = this->start; i < this->pos; i++)
-			{
-				// Add to output vector
-				T* temp;
-				temp = (T*)( this->cpy( (void*)&(this->source[i]) ) );
-				out.push_back(*temp);
-			}
+			std::string out = this->source.substr(this->start, this->pos - this->start);
 			
 			// Update start if necessary
 			if(update)
@@ -274,9 +249,9 @@ class PDA
 		};
 		
 		// Report starting delimiter missing
-		int noStartErr(T close)
+		int noStartErr(char close)
 		{
-			std::cout << "[Error] Non-escaped delimiter " << this->tstr((void*)(&close)) << " has no starting complement\n";
+			std::cout << "[Error] Non-escaped delimiter " << close << " has no starting complement\n";
 			
 			return -1;
 		};
@@ -288,7 +263,7 @@ class PDA
 			for(unsigned int i = 0; i < this->stack.size(); i++)
 			{
 				int j = this->stack[i];
-				std::cout << this->tstr( (void*)&(this->pairs[j]) ) << " ";
+				std::cout << this->pairs[j] << " ";
 			}
 			std::cout << "] do(es) not have a closing complement\n";
 			
@@ -296,9 +271,9 @@ class PDA
 		};
 		
 		// Report starting/closing delimiter pair mismatch
-		int mismatchErr(T start, T close)
+		int mismatchErr(char start, char close)
 		{
-			std::cout << "[Error] Starting delimiter " << this->tstr((void*)(&start)) << " does not pair with closing delimiter " << this->tstr((void*)(&close)) << "\n";
+			std::cout << "[Error] Starting delimiter " << start << " does not pair with closing delimiter " << close << "\n";
 			
 			return -3;
 		};
