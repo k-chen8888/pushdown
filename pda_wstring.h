@@ -184,7 +184,6 @@ class PDA<std::wstring>
 		};
 		
 		// Add index of a delimiter to the stack
-		// Records what was pushed
 		void push(unsigned int index)
 		{
 			this->stack.push_back(index);
@@ -194,8 +193,15 @@ class PDA<std::wstring>
 		// Resets the saved delimiter index to the last element of the stack
 		void pop()
 		{
-			this->odelim = this->stack.back();
-			this->stack.pop_back();
+			if(this->stack.size() > 0)
+			{
+				this->odelim = this->stack.back();
+				this->stack.pop_back();
+			}
+			else // Cannot pop from empty stack
+			{
+				std::wcout << L"Nothing to pop from stack";
+			}
 		};
 		
 		/* Reporting */

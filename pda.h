@@ -208,8 +208,15 @@ class PDA
 		// Resets the saved delimiter index to the last element of the stack
 		void pop()
 		{
-			this->odelim = this->stack.back();
-			this->stack.pop_back();
+			if(this->stack.size() > 0)
+			{
+				this->odelim = this->stack.back();
+				this->stack.pop_back();
+			}
+			else // Cannot pop from empty stack
+			{
+				std::cout << "Nothing to pop from stack";
+			}
 		};
 		
 		/* Reporting */
