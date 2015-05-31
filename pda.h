@@ -227,9 +227,13 @@ class PDA
 		};
 		
 		// Get the index of the last delimiter to be pushed onto the stack
+		// 0 if the stack is empty
 		unsigned int lastDelim()
 		{
-			return this->stack.back();
+			if(this->stack.size() > 0)
+				return this->stack.back();
+			else
+				return 0;
 		};
 		
 		// Get the index of the last delimiter to be removed from the stack
