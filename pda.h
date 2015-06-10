@@ -79,129 +79,128 @@ class PDA
 		{
 			std::vector<T> out;
 			
+			// Do not proceed if error code is set or end of source is reached
+			if(this->err < 0 || this->pos > this->source.size())
+				return out;
+			
 			// Reset the last opening delimiter popped, assuming that the user has already accessed it
 			if(this->odelim != 0)
 				this->odelim = 0;
 			
-			// Normal operation
-			if(this->esc) // Check for escaped character
+			// There's nothing to do if this element is escaped
+			if(this->esc == true)
 			{
 				this->esc = false;
 				
-				// Nothing else to do
+				// Clean up and end
 				this->pos += 1;
+				if(this->pos >= this->source.size() && this->stack.size() > 0)
+				{
+					// Unclosed delimiter error
+					this->err = this->noCloseErr();
+				}
 				return out;
 			}
-			else
+			
+			// There's nothing to do if this is an escape element
+			if( this->comp( &(this->source[this->pos]), &(this->pairs[0]) ) == 0 )
 			{
-				// Check for escape character
-				if( this->comp( &(this->source[this->pos]), &(this->pairs[0]) ) == 0 )
+				this->esc = true;
+				
+				// Clean up and end
+				this->pos += 1;
+				if(this->pos >= this->source.size() && this->stack.size() > 0)
 				{
-					this->esc = true;
-					
-					// Nothing else to do
-					this->pos += 1;
-					return out;
+					// Unclosed delimiter error
+					this->err = this->noCloseErr();
 				}
-				else
+				return out;
+			}
+			
+			// Check for delimiters
+			for(int i = 1; i < this->pairs.size(); i++)
+			{
+				// Is this a delimiter?
+				if( this->comp( &(this->source[this->pos]), &(this->pairs[i]) ) == 0 )
 				{
-					// Check for opening delimiter
-					for(unsigned int i = 1; i < this->pairs.size(); i += 2)
+					// What kind of delimiter is this?
+					if(i % 2 == 1) // Opening delimiter
 					{
-						// Check for opening delimiters that pair with themselves
-						if( this->stack.size() > 0 )
+						// Check to see if it matches a closing delimiter
+						if( this->comp( &(this->source[this->pos]), &(this->pairs[i + 1]) ) == 0 && this->stack.back() == i)
 						{
-							if( this->comp( &(this->source[this->pos]), &(this->pairs[i + 1]) ) == 0 )
-							{
-								this->pop();
-								
-								// Build token
-								out = this->getPortion(true);
-								
-								// Clean up and return
-								this->pos += 1;
-								return out;
-							}
+							// Handle it like a closing delimiter if it is already on the stack AND it is at the top of the stack
+							this->pop();
 						}
-						
-						// Normal opening delimiter
-						if( this->comp( &(this->source[this->pos]), &(this->pairs[i]) ) == 0 )
+						else
 						{
+							// Otherwise, handle it like an opening delimiter
 							this->push(i);
-							
-							// Try to build a token
-							out = this->getPortion(true);
-							
-							// Clean up and return
-							this->pos += 1;
-							return out;
 						}
 					}
-					
-					// Check for closing delimiter
-					for(unsigned int i = 2; i < this->pairs.size(); i += 2)
+					else           // Closing delimiter
 					{
-						if( this->comp( &(this->source[this->pos]), &(this->pairs[i]) ) == 0 )
+						// Pop only if valid closing delimiter
+						if( this->stack.size() > 0 )
 						{
-							if( this->stack.size() > 0 )
+							if(this->stack.back() == i - 1)
 							{
-								unsigned int op_index = this->stack.back();
-								if(op_index == i - 1)
-								{
-									this->pop();
-								}
-								else // Invalid closing delimiter
-								{
-									// Report error, stop traversal, and return
-									this->err = this->mismatchErr(this->pairs[op_index], this->pairs[i]);
-									return out;
-								}
-								
-								// Build token
-								out = this->getPortion(true);
-								
-								// Clean up and return
-								this->pos += 1;
-								return out;
+								// Safe to pop()
+								this->pop();
 							}
 							else
 							{
-								// Report error, stop traversal, and return
-								this->err = this->noStartErr(this->pairs[i]);
+								// This closing delimiter does not match the one found on top of the stack
+								this->err = this->mismatchErr(this->pairs[this->stack.back()], this->pairs[i]);
 								return out;
 							}
 						}
+						else
+						{
+							// No opening delimiters found on the stack
+							this->err = this->noStartErr(this->pairs[i]);
+							return out;
+						}
+						
+						// Save last index to be popped
+						this->odelim = i - 1;
 					}
 					
-					// Found nothing of the sort
+					// Attempt to generate a token
+					out = this->getPortion(true);
+					
+					// Clean up and end
 					this->pos += 1;
-				}
-			}
-			
-			// End of source?
-			if(this->pos >= this->source.size())
-			{
-				// Check for errors at the end of traversal
-				if(this->stack.size() > 0)
-				{
-					this->err = this->noCloseErr();
+					if(this->pos >= this->source.size() && this->stack.size() > 0)
+					{
+						// Unclosed delimiter error
+						this->err = this->noCloseErr();
+					}
 					return out;
 				}
-				
-				// Try to output a token
-				out = this->getPortion(true);
-				return out;
 			}
 			
-			// Final return
+			// Clean up and end
+			this->pos += 1;
+			if(this->pos >= this->source.size() && this->stack.size() > 0)
+			{
+				// Unclosed delimiter error
+				this->err = this->noCloseErr();
+			}
 			return out;
 		};
 		
 		// Add index of a delimiter to the stack
-		// Records what was pushed
 		void push(unsigned int index)
 		{
 			this->stack.push_back(index);
+			
+			std::cout << "after push at " << this->pos << " [";
+			for(int i = 0; i < this->stack.size(); i++)
+			{
+				std::cout << this->stack[i] << ", ";
+			}
+			std::cout << "]\n";
 		};
 		
 		// Remove index of a delimiter from the stack when its complement is found
@@ -217,6 +216,13 @@ class PDA
 			{
 				std::cout << "Nothing to pop from stack";
 			}
+			
+			std::cout << "after pop at " << this->pos << " [";
+			for(int i = 0; i < this->stack.size(); i++)
+			{
+				std::cout << this->stack[i] << ", ";
+			}
+			std::cout << "]\n";
 		};
 		
 		/* Reporting */

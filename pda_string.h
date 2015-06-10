@@ -62,129 +62,128 @@ class PDA<std::string>
 		{
 			std::string out;
 			
+			// Do not proceed if error code is set or end of source is reached
+			if(this->err < 0 || this->pos > this->source.length())
+				return out;
+			
 			// Reset the last opening delimiter popped, assuming that the user has already accessed it
 			if(this->odelim != 0)
 				this->odelim = 0;
 			
-			// Normal operation
-			if(this->esc) // Check for escaped character
+			// There's nothing to do if this character is escaped
+			if(this->esc == true)
 			{
 				this->esc = false;
 				
-				// Nothing else to do
+				// Clean up and end
 				this->pos += 1;
-				return out;
-			}
-			else
-			{
-				// Check for escape character
-				if( this->source.at(this->pos) == this->pairs[0] )
+				if(this->pos >= this->source.length() && this->stack.size() > 0)
 				{
-					this->esc = true;
-					
-					// Nothing else to do
-					this->pos += 1;
-					return out;
-				}
-				else
-				{
-					// Check for opening delimiter
-					for(unsigned int i = 1; i < this->pairs.size(); i += 2)
-					{
-						// Check for opening delimiters that pair with themselves
-						if( this->stack.size() > 0 )
-						{
-							if( this->source.at(this->pos) == this->pairs[i + 1] )
-							{
-								this->pop();
-								
-								// Build token
-								out = this->getPortion(true);
-								
-								// Clean up and return
-								this->pos += 1;
-								return out;
-							}
-						}
-						
-						// Normal opening delimiter
-						if( this->source.at(this->pos) == this->pairs[i] )
-						{
-							this->push(i);
-							
-							// Try to build a token
-							out = this->getPortion(true);
-							
-							// Clean up and return
-							this->pos += 1;
-							return out;
-						}
-					}
-					
-					// Check for closing delimiter
-					for(unsigned int i = 2; i < this->pairs.size(); i += 2)
-					{
-						if( this->source.at(this->pos) == this->pairs[i] )
-						{
-							if( this->stack.size() > 0 )
-							{
-								unsigned int op_index = this->stack.back();
-								if(op_index == i - 1) // Pop if correct delimiter pairing
-								{
-									this->pop();
-								}
-								else // Invalid closing delimiter
-								{
-									// Report error, stop traversal, and return
-									this->err = this->mismatchErr(this->pairs[op_index], this->pairs[i]);
-									return out;
-								}
-								
-								// Build token
-								out = this->getPortion(true);
-								
-								// Clean up and return
-								this->pos += 1;
-								return out;
-							}
-							else
-							{
-								// Report error, stop traversal, and return
-								this->err = this->noStartErr(this->pairs[i]);
-								return out;
-							}
-						}
-					}
-					
-					// Found nothing of the sort
-					this->pos += 1;
-				}
-			}
-				
-			// End of source?
-			if(this->pos >= this->source.size())
-			{
-				// Check for errors at the end of traversal
-				if(this->stack.size() > 0)
-				{
+					// Unclosed delimiter error
 					this->err = this->noCloseErr();
-					return out;
 				}
-				
-				// Try to output a token
-				out = this->getPortion(true);
 				return out;
 			}
 			
-			// Final return
+			// There's nothing to do if this is an escape character
+			if( this->source[this->pos] == this->pairs[0] )
+			{
+				this->esc = true;
+				
+				// Clean up and end
+				this->pos += 1;
+				if(this->pos >= this->source.length() && this->stack.size() > 0)
+				{
+					// Unclosed delimiter error
+					this->err = this->noCloseErr();
+				}
+				return out;
+			}
+			
+			// Check for delimiters
+			for(int i = 1; i < this->pairs.size(); i++)
+			{
+				// Is this a delimiter?
+				if( this->pairs[i] == this->source.at(this->pos) )
+				{
+					// What kind of delimiter is this?
+					if(i % 2 == 1) // Opening delimiter
+					{
+						// Check to see if it matches a closing delimiter
+						if( this->pairs[i + 1] == this->source.at(this->pos) && this->stack.back() == i)
+						{
+							// Handle it like a closing delimiter if it is already on the stack AND it is at the top of the stack
+							this->pop();
+						}
+						else
+						{
+							// Otherwise, handle it like an opening delimiter
+							this->push(i);
+						}
+					}
+					else           // Closing delimiter
+					{
+						// Pop only if valid closing delimiter
+						if( this->stack.size() > 0 )
+						{
+							if(this->stack.back() == i - 1)
+							{
+								// Safe to pop()
+								this->pop();
+							}
+							else
+							{
+								// This closing delimiter does not match the one found on top of the stack
+								this->err = this->mismatchErr(this->pairs[this->stack.back()], this->pairs[i]);
+								return out;
+							}
+						}
+						else
+						{
+							// No opening delimiters found on the stack
+							this->err = this->noStartErr(this->pairs[i]);
+							return out;
+						}
+						
+						// Save last index to be popped
+						this->odelim = i - 1;
+					}
+					
+					// Attempt to generate a token
+					out = this->getPortion(true);
+					
+					// Clean up and end
+					this->pos += 1;
+					if(this->pos >= this->source.length() && this->stack.size() > 0)
+					{
+						// Unclosed delimiter error
+						this->err = this->noCloseErr();
+					}
+					return out;
+				}
+			}
+			
+			// Clean up and end
+			this->pos += 1;
+			if(this->pos >= this->source.length() && this->stack.size() > 0)
+			{
+				// Unclosed delimiter error
+				this->err = this->noCloseErr();
+			}
 			return out;
 		};
 		
 		// Add index of a delimiter to the stack
-		// Records what was pushed
 		void push(unsigned int index)
 		{
 			this->stack.push_back(index);
+			
+			std::cout << "after push at " << this->pos << " [";
+			for(int i = 0; i < this->stack.size(); i++)
+			{
+				std::cout << this->stack[i] << ", ";
+			}
+			std::cout << "]\n";
 		};
 		
 		// Remove index of a delimiter from the stack when its complement is found
@@ -200,6 +199,13 @@ class PDA<std::string>
 			{
 				std::cout << "Nothing to pop from stack";
 			}
+			
+			std::cout << "after pop at " << this->pos << " [";
+			for(int i = 0; i < this->stack.size(); i++)
+			{
+				std::cout << this->stack[i] << ", ";
+			}
+			std::cout << "]\n";
 		};
 		
 		/* Reporting */
