@@ -27,6 +27,47 @@ class PDA<std::string>
 		// Private default constructor
 		PDA() { }
 		
+		/*******************************************
+		 * Private Functions
+		 *******************************************/
+		
+		/* Stack manipulation */
+		
+		// Add index of a delimiter to the stack
+		void push(unsigned int index)
+		{
+			this->stack.push_back(index);
+			
+			std::cout << "after push at " << this->pos << " [";
+			for(int i = 0; i < this->stack.size(); i++)
+			{
+				std::cout << this->stack[i] << ", ";
+			}
+			std::cout << "]\n";
+		};
+		
+		// Remove index of a delimiter from the stack when its complement is found
+		// Resets the saved delimiter index to the last element of the stack
+		void pop()
+		{
+			if(this->stack.size() > 0)
+			{
+				this->odelim = this->stack.back();
+				this->stack.pop_back();
+			}
+			else // Cannot pop from empty stack
+			{
+				std::cout << "Nothing to pop from stack";
+			}
+			
+			std::cout << "after pop at " << this->pos << " [";
+			for(int i = 0; i < this->stack.size(); i++)
+			{
+				std::cout << this->stack[i] << ", ";
+			}
+			std::cout << "]\n";
+		};
+		
 	public:
 		/* Constructor */
 		PDA(std::string src, std::vector<char> p)
@@ -171,41 +212,6 @@ class PDA<std::string>
 				this->err = this->noCloseErr();
 			}
 			return out;
-		};
-		
-		// Add index of a delimiter to the stack
-		void push(unsigned int index)
-		{
-			this->stack.push_back(index);
-			
-			std::cout << "after push at " << this->pos << " [";
-			for(int i = 0; i < this->stack.size(); i++)
-			{
-				std::cout << this->stack[i] << ", ";
-			}
-			std::cout << "]\n";
-		};
-		
-		// Remove index of a delimiter from the stack when its complement is found
-		// Resets the saved delimiter index to the last element of the stack
-		void pop()
-		{
-			if(this->stack.size() > 0)
-			{
-				this->odelim = this->stack.back();
-				this->stack.pop_back();
-			}
-			else // Cannot pop from empty stack
-			{
-				std::cout << "Nothing to pop from stack";
-			}
-			
-			std::cout << "after pop at " << this->pos << " [";
-			for(int i = 0; i < this->stack.size(); i++)
-			{
-				std::cout << this->stack[i] << ", ";
-			}
-			std::cout << "]\n";
 		};
 		
 		/* Reporting */
