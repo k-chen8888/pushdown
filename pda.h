@@ -24,6 +24,8 @@ class PDA
 		unsigned int pos;                // Current read position of PDA
 		bool esc;                        // True if an escape character was found
 		
+		bool noisy;                      // push() and pop() output to command line when set
+		
 		// Comparator, copy, toString, and destructor functions
 		comparatorF comp;                // "less than" returns < 0; "greater than" returns > 0; "equal to" returns 0
 		copyF cpy;
@@ -51,12 +53,15 @@ class PDA
 		{
 			this->stack.push_back(index);
 			
-			std::cout << "after push at " << this->pos << " [";
-			for(int i = 0; i < this->stack.size(); i++)
+			if(this->noisy)
 			{
-				std::cout << this->stack[i] << ", ";
+				std::cout << "after push at " << this->pos << " [";
+				for(unsigned int i = 0; i < this->stack.size(); i++)
+				{
+					std::cout << this->stack[i] << ", ";
+				}
+				std::cout << "]\n";
 			}
-			std::cout << "]\n";
 		};
 		
 		// Remove index of a delimiter from the stack when its complement is found
@@ -73,21 +78,25 @@ class PDA
 				std::cout << "Nothing to pop from stack";
 			}
 			
-			std::cout << "after pop at " << this->pos << " [";
-			for(int i = 0; i < this->stack.size(); i++)
+			if(this->noisy)
 			{
-				std::cout << this->stack[i] << ", ";
+				std::cout << "After pop() at " << this->pos << " [";
+				for(unsigned int i = 0; i < this->stack.size(); i++)
+				{
+					std::cout << this->stack[i] << ", ";
+				}
+				std::cout << "]\n";
 			}
-			std::cout << "]\n";
 		};
 		
 	public:
 		/* Constructor */
-		PDA(std::vector<T> src, std::vector<T> p, comparatorF co, copyF cp, toStringF ts, destructorF de)
+		PDA(std::vector<T> src, std::vector<T> p, comparatorF co, copyF cp, toStringF ts, destructorF de, bool n)
 		{
 			// Load info
 			this->source = src;
 			this->pairs = p;
+			this->noisy = n;
 			
 			// Stack... is already initialized to an empty vector
 			
@@ -159,7 +168,7 @@ class PDA
 			}
 			
 			// Check for delimiters
-			for(int i = 1; i < this->pairs.size(); i++)
+			for(unsigned int i = 1; i < this->pairs.size(); i++)
 			{
 				// Is this a delimiter?
 				if( this->comp( &(this->source[this->pos]), &(this->pairs[i]) ) == 0 )

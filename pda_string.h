@@ -17,6 +17,8 @@ class PDA<std::string>
 		unsigned int pos;                // Current read position of PDA
 		bool esc;                        // True if an escape character was found
 		
+		bool noisy;                      // push() and pop() output to command line when set
+		
 		// Error checking
 		// < 0 means error, do not continue
 		int err;
@@ -38,12 +40,15 @@ class PDA<std::string>
 		{
 			this->stack.push_back(index);
 			
-			std::cout << "after push at " << this->pos << " [";
-			for(int i = 0; i < this->stack.size(); i++)
+			if(this->noisy)
 			{
-				std::cout << this->stack[i] << ", ";
+				std::cout << "after push at " << this->pos << " [";
+				for(unsigned int i = 0; i < this->stack.size(); i++)
+				{
+					std::cout << this->stack[i] << ", ";
+				}
+				std::cout << "]\n";
 			}
-			std::cout << "]\n";
 		};
 		
 		// Remove index of a delimiter from the stack when its complement is found
@@ -60,21 +65,25 @@ class PDA<std::string>
 				std::cout << "Nothing to pop from stack";
 			}
 			
-			std::cout << "after pop at " << this->pos << " [";
-			for(int i = 0; i < this->stack.size(); i++)
+			if(this->noisy)
 			{
-				std::cout << this->stack[i] << ", ";
+				std::cout << "after pop at " << this->pos << " [";
+				for(unsigned int i = 0; i < this->stack.size(); i++)
+				{
+					std::cout << this->stack[i] << ", ";
+				}
+				std::cout << "]\n";
 			}
-			std::cout << "]\n";
 		};
 		
 	public:
 		/* Constructor */
-		PDA(std::string src, std::vector<char> p)
+		PDA(std::string src, std::vector<char> p, bool n)
 		{
 			// Load info
 			this->source = src;
 			this->pairs = p;
+			this->noisy = n;
 			
 			// Stack... is already initialized to an empty vector
 			
@@ -142,7 +151,7 @@ class PDA<std::string>
 			}
 			
 			// Check for delimiters
-			for(int i = 1; i < this->pairs.size(); i++)
+			for(unsigned int i = 1; i < this->pairs.size(); i++)
 			{
 				// Is this a delimiter?
 				if( this->pairs[i] == this->source.at(this->pos) )

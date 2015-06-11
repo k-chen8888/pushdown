@@ -17,6 +17,8 @@ class PDA<std::wstring>
 		unsigned int pos;                // Current read position of PDA
 		bool esc;                        // True if an escape character was found
 		
+		bool noisy;                      // push() and pop() output to command line when set
+		
 		// Error checking
 		// < 0 means error, do not continue
 		int err;
@@ -38,12 +40,15 @@ class PDA<std::wstring>
 		{
 			this->stack.push_back(index);
 			
-			std::wcout << "after push at " << this->pos << " [";
-			for(int i = 0; i < this->stack.size(); i++)
+			if(this->noisy)
 			{
-				std::wcout << this->stack[i] << ", ";
+				std::wcout << "after push at " << this->pos << " [";
+				for(unsigned int i = 0; i < this->stack.size(); i++)
+				{
+					std::wcout << this->stack[i] << ", ";
+				}
+				std::wcout << "]\n";
 			}
-			std::wcout << "]\n";
 		};
 		
 		// Remove index of a delimiter from the stack when its complement is found
@@ -60,21 +65,25 @@ class PDA<std::wstring>
 				std::wcout << L"Nothing to pop from stack";
 			}
 			
-			std::wcout << "after pop at " << this->pos << " [";
-			for(int i = 0; i < this->stack.size(); i++)
+			if(this->noisy)
 			{
-				std::wcout << this->stack[i] << ", ";
+				std::wcout << "after pop at " << this->pos << " [";
+				for(unsigned int i = 0; i < this->stack.size(); i++)
+				{
+					std::wcout << this->stack[i] << ", ";
+				}
+				std::wcout << "]\n";
 			}
-			std::wcout << "]\n";
 		};
 		
 	public:
 		/* Constructor */
-		PDA(std::wstring src, std::vector<wchar_t> p)
+		PDA(std::wstring src, std::vector<wchar_t> p, bool n)
 		{
 			// Load info
 			this->source = src;
 			this->pairs = p;
+			this->noisy = n;
 			
 			// Stack... is already initialized to an empty vector
 			
@@ -145,7 +154,7 @@ class PDA<std::wstring>
 			}
 			
 			// Check for delimiters
-			for(int i = 1; i < this->pairs.size(); i++)
+			for(unsigned int i = 1; i < this->pairs.size(); i++)
 			{
 				// Is this a delimiter?
 				if( this->pairs[i] == this->source.at(this->pos) )
