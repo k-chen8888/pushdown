@@ -177,7 +177,7 @@ class PDA
 					if(i % 2 == 1) // Opening delimiter
 					{
 						// Check to see if it matches a closing delimiter
-						if( this->comp( &(this->source[this->pos]), &(this->pairs[i + 1]) ) == 0 && this->stack.back() == i)
+						if( this->stack.size() > 0 && this->stack.back() == i && this->comp( &(this->source[this->pos]), &(this->pairs[i + 1]) ) == 0 )
 						{
 							// Handle it like a closing delimiter if it is already on the stack AND it is at the top of the stack
 							this->pop();

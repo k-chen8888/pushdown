@@ -163,7 +163,7 @@ class PDA<std::wstring>
 					if(i % 2 == 1) // Opening delimiter
 					{
 						// Check to see if it matches a closing delimiter
-						if( this->pairs[i + 1] == this->source.at(this->pos) && this->stack.back() == i)
+						if( this->stack.size() > 0 && this->stack.back() == i && this->pairs[i + 1] == this->source.at(this->pos) )
 						{
 							// Handle it like a closing delimiter if it is already on the stack AND it is at the top of the stack
 							this->pop();
